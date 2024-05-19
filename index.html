@@ -1,0 +1,175 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Cherapace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" 
+  integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" 
+  crossorigin="anonymous">
+  <style>
+    html {
+     font-family: Arial;
+     display: inline-block;
+     margin: 0px auto;
+     text-align: center;
+    }
+    h2 { font-size: 2.0rem; }
+    p { font-size: 1.5rem; }
+    .units { font-size: 1.2rem; }
+    .sensor-label{ font-size: 2.0rem; }
+    .button {
+      display: inline-block;
+      padding: 15px 25px;
+      font-size: 24px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      outline: none;
+      color: #fff;
+      background-color: #202020;
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 9px #999;
+    }
+
+    .button:hover {background-color: #565656}
+
+    .button:active {
+      background-color: #565656;
+      box-shadow: 0 5px #666;
+     transform: translateY(4px);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      padding-top: 100px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0,0,0);
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .modal-button {
+      flex: 1;
+      margin: 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Cherapace Stream & Feed</h2>
+  <p>Inside: <span id="inside">0</span> Outside: <span id="outside">0</span></p>
+  <div class="container">
+    <div class="row">
+        <div class="col-lg-8  offset-lg-2">
+            <img src="{{ url_for('video_feed') }}" width="80%">
+        </div>
+    </div>
+  </div>
+  <p><span id="feed-status">Lobsters have not been feeded!</spans></p>
+  <button class="button" onclick="feedLobster()">Feed Lobster</button>
+
+  <!-- Caution Popup (Modal) -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p>The Lobsters have been fed today!<br><br>Feeding the lobster more than once a day may cause issues for your Lobster aquaculture!</p>
+      <div class="modal-buttons">
+        <button id="cancel-button" class="button modal-button">Cancel</button>
+        <button id="feed-anyway-button" class="button modal-button">Feed Anyway</button>
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+  function fetchCounts() {
+    fetch('/get_counts')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("inside").innerHTML = data.lobster_inside;
+        document.getElementById("outside").innerHTML = data.lobster_outside;
+      })
+      .catch(error => console.error('Error fetching counts:', error));
+  }
+
+  function feedLobster() {
+    const feedStatusElement = document.getElementById("feed-status");
+    if (feedStatusElement.innerText === "Lobster have been fed!") {
+      showModal();
+    } else {
+      updateFeedStatus();
+    }
+  }
+
+  function showModal() {
+    const modal = document.getElementById("myModal");
+    modal.style.display = "block";
+    
+    document.getElementById("cancel-button").onclick = function() {
+      modal.style.display = "none";
+    }
+    document.getElementById("feed-anyway-button").onclick = function() {
+      modal.style.display = "none";
+      updateFeedStatus();
+    }
+  }
+
+  function updateFeedStatus() {
+    fetch('/feed_lobster', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data.message);
+      document.getElementById("feed-status").innerText = "Lobster have been fed!";
+    })
+    .catch(error => console.error('Error feeding lobster:', error));
+  }
+
+  // Close the modal when the user clicks on <span> (x)
+  document.querySelector(".close").onclick = function() {
+    document.getElementById("myModal").style.display = "none";
+  }
+
+  // Close the modal when the user clicks anywhere outside of the modal
+  window.onclick = function(event) {
+    const modal = document.getElementById("myModal");
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  // Fetch counts every 2 seconds
+  setInterval(fetchCounts, 2000);
+</script>
+</html>
