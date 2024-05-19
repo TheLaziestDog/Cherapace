@@ -1,4 +1,3 @@
-# This is Cherapace SF (Stream & Feed) code, this includes autofeeder mechanism and object detection
 # YoloV8 & OpenCV 
 from ultralytics import YOLO
 import cv2
@@ -15,8 +14,7 @@ camera = cv2.VideoCapture(0)
 camera.set(3, 640)
 camera.set(4, 480)
 
-# Use /home/jg2gb-5/yolov8/cherapace/best.pt for Jetson
-model = YOLO("/Users/baloon/Programming/Python/projects/Computer-Vision-Projects/cherapace/runs/detect/train4/weights/best.pt")
+model = YOLO("best.pt")
 
 # Object classes
 classNames = ["Lobster_AT_Inside", "Lobster_AT_Outside"]
