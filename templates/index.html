@@ -20,6 +20,7 @@
     .button {
       display: inline-block;
       padding: 15px 25px;
+      margin-bottom: 20px;
       font-size: 24px;
       cursor: pointer;
       text-align: center;
@@ -85,7 +86,7 @@
 </head>
 <body>
   <h2>Cherapace Stream & Feed</h2>
-  <p>Inside: <span id="inside">0</span> Outside: <span id="outside">0</span></p>
+  <p>Lobster Inside: <span id="inside">0</span> | Outside: <span id="outside">0</span></p>
   <div class="container">
     <div class="row">
         <div class="col-lg-8  offset-lg-2">
@@ -93,14 +94,15 @@
         </div>
     </div>
   </div>
-  <p><span id="feed-status">Lobsters have not been feeded!</spans></p>
-  <button class="button" onclick="feedLobster()">Feed Lobster</button>
+  <p><span id="feed-status">Lobster have not been feeded!</spans></p>
+  <button class="button" onclick="feedLobster()">Feed Lobster</button><br>
+  <button class="button" onclick="resetDetection()">Reset Detection</button>
 
   <!-- Caution Popup (Modal) -->
   <div id="myModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <p>The Lobsters have been fed today!<br><br>Feeding the lobster more than once a day may cause issues for your Lobster aquaculture!</p>
+      <p>The Lobsters have been fed twice today!<br><br>Feeding the lobster more than twice a day may cause issues for your Lobster aquaculture!</p>
       <div class="modal-buttons">
         <button id="cancel-button" class="button modal-button">Cancel</button>
         <button id="feed-anyway-button" class="button modal-button">Feed Anyway</button>
@@ -109,19 +111,37 @@
   </div>
 </body>
 <script>
+  var lobster_fed_count;
   function fetchCounts() {
-    fetch('/get_counts')
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById("inside").innerHTML = data.lobster_inside;
-        document.getElementById("outside").innerHTML = data.lobster_outside;
-      })
-      .catch(error => console.error('Error fetching counts:', error));
+  fetch('/get_counts')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById("inside").innerHTML = data.lobster_inside;
+      document.getElementById("outside").innerHTML = data.lobster_outside;
+      switch(data.lobster_fed) {
+        case 0:
+          document.getElementById("feed-status").innerHTML = "Lobster have not been fed";
+          break;
+        case 1:
+          document.getElementById("feed-status").innerHTML = "Lobster have been fed once!";
+          break;
+        case 2:
+          document.getElementById("feed-status").innerHTML = "Lobster have been fed twice!";
+          break;
+        case 3:
+          document.getElementById("feed-status").innerHTML = "Lobster have been fed more than twice this day!";
+          break;
+      }
+    })
+    .catch(error => console.error('Error fetching counts:', error));
+
   }
 
   function feedLobster() {
-    const feedStatusElement = document.getElementById("feed-status");
-    if (feedStatusElement.innerText === "Lobster have been fed!") {
+    var feedStatusElement = document.getElementById("feed-status");
+    var feedStatusText = feedStatusElement.innerText.trim(); // Trim any whitespace just in case
+
+    if (feedStatusText === "Lobster have been fed twice!" || feedStatusText === "Lobster have been fed more than twice this day!") {
       showModal();
     } else {
       updateFeedStatus();
@@ -151,10 +171,28 @@
     .then(response => response.json())
     .then(data => {
       console.log(data.message);
-      document.getElementById("feed-status").innerText = "Lobster have been fed!";
     })
     .catch(error => console.error('Error feeding lobster:', error));
   }
+
+  function resetDetection() {
+    // Make an AJAX request to reset detection
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/reset_detection", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        // Response received, update the counts on the page
+        var response = JSON.parse(xhr.responseText);
+        document.getElementById("inside").innerHTML = response.inside;
+        document.getElementById("outside").innerHTML = response.outside;
+      }
+    };
+    xhr.send();
+  }
+
+  // Fetch counts when the page loads
+  document.addEventListener("DOMContentLoaded", fetchCounts);
 
   // Close the modal when the user clicks on <span> (x)
   document.querySelector(".close").onclick = function() {
@@ -170,6 +208,6 @@
   }
 
   // Fetch counts every 2 seconds
-  setInterval(fetchCounts, 2000);
+  setInterval(fetchCounts, 1000);
 </script>
 </html>
