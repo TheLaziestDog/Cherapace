@@ -25,8 +25,8 @@ camera.set(4, 480)
 # Sensors
 water_param = [0, 0, 0]
 
-# Use /home/jg2gb-5/yolov8/cherapace/best.pt for Jetson
-model = YOLO("/Users/baloon/Programming/Python/projects/Computer-Vision-Projects/cherapace/runs/detect/train5/weights/best.pt")
+# insert model
+model = YOLO("best.pt")
 
 # Object classes
 classNames = ["Lobster_AT_Inside", "Lobster_AT_Outside"]
